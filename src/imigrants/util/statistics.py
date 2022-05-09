@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as st
+import collections
 
 
 class Statistics:
@@ -80,38 +81,25 @@ class Statistics:
             self.histogram(normal=True)
         return results
 
-    def ttest(self, a, b, independent=True, *args, **kwargs):
-        return st.ttest_ind(self._data[a, :], self._data[b, :],
-                            equal_var=independent) \
-            if independent else st.ttest_rel(a, b, *args, **kwargs)
+    def ttest(self: object, a, b, *args,
+              paired=True, equal_var=True, **kwargs):
+        if not paired:
+            return st.ttest_ind(self._data[a], self._data[b],
+                                equal_var=equal_var, *args, **kwargs)
+        return st.ttest_rel(self._data[a], self._data[b],
+                            *args, **kwargs)
 
-    # Non Parametric
-    def mann_whitney(self: object, a, b, *args, **kwargs):
-        return st.mannwhitneyu(a, b, *args, **kwargs)
-
-    def wilcoxon(self: object, a, b, *args, **kwargs):
-        return st.wilcoxon(a, b)
-
-    def kruskal_wallis(self: object, a, b, *args, **kwargs):
-        return st.kruskal(*self._data)
-
-    def friedman_chi(self: object):
-        return st.friedmanchisquare(*self._data)
-
-    def one_way_ind_anova(self: object, independent=True, *args, **kwargs):
-        if independent:
-            return st.f_oneway(*self._data)
+    def one_way_anova(self: object, paired=False, *args, **kwargs):
+        if not paired:
+            return st.f_oneway(*(c for _, c in self._data.iteritems()))
 
         grand_mean = self._data.values.mean()
-        # grand_variance = data_frame.values.var(ddof=1)
 
         row_means = self._data.mean(axis=1)
         column_means = self._data.mean(axis=0)
 
-        # n = number of subjects; k = number of conditions/treatments
         n, k = len(self._data.axes[0]), len(self._data.axes[1])
-        # total number of measurements
-        N = self._data.size  # or n * k
+        N = self._data.size
 
         # degrees of freedom
         df_total = N - 1
@@ -121,50 +109,53 @@ class Statistics:
         df_error = df_within - df_subject
 
         # compute variances
-        SS_between = sum(n*[(m - grand_mean)**2 for m in column_means])
-        SS_within = sum(sum([(self._data[col] - column_means[i])
+        ss_between = sum(n*[(m - grand_mean)**2 for m in column_means])
+        ss_within = sum(sum([(self._data[col] - column_means[i])
                              ** 2 for i, col in enumerate(self._data)]))
-        SS_subject = sum(k * [(m - grand_mean)**2 for m in row_means])
-        SS_error = SS_within - SS_subject
-        # SS_total = SS_between + SS_within
+        ss_subject = sum(k * [(m - grand_mean)**2 for m in row_means])
+        ss_error = ss_within - ss_subject
 
         # Compute Averages
-        MS_between = SS_between / df_between
-        MS_error = SS_error / df_error
-        # MS_subject = SS_subject / df_subject
+        ms_between = ss_between / df_between
+        ms_error = ss_error / df_error
 
-        # F Statistics
-        F = MS_between / MS_error
-        # p-value
-        p_value = st.f.sf(F, df_between, df_error)
+        fstat = ms_between / ms_error
+        p_value = st.f.sf(fstat, df_between, df_error)
 
-        return (F, p_value)
+        AnovaResult = collections.namedtuple(
+            "F_onewayResult", ["statistic", "pvalue"])
+        return AnovaResult(fstat, p_value)
 
-    # Effect size
-    def effect_size_t(stat, df):
-        r = np.sqrt(stat**2/(stat**2 + df))
-        return r
+    def ttest_effect_size(statistic: float, df: int):
+        return np.sqrt(statistic**2 / (statistic**2 + df))
 
-    def effect_size_mw(stat, n1, n2):
-        """
-        n_ob: number of observations
-        """
-        n_ob = n1 + n2
-        mean = n1*n2/2
-        std = np.sqrt(n1*n2*(n1+n2+1)/12)
-        z_score = (stat - mean)/std
-        print(z_score)
-        return z_score/np.sqrt(n_ob)
+    def mann_whitney_effect_size(statistic: float, obs1: int, obs2: int):
+        nobs = obs1 + obs2
+        mean = obs1 * obs2 / 2
+        std = np.sqrt(obs1 * obs2 * (obs1 + obs2 + 1) / 12)
+        z_score = (statistic - mean) / std
+        return z_score / np.sqrt(nobs)
 
-    def effect_size_wx(stat, n, n_ob):
-        """
-            n: size of effective sample (zero differences are excluded!)
-            n_ob: number of observations
-            """
-        mean = n*(n+1)/4
-        std = np.sqrt(n*(n+1)*(2*n+1)/24)
-        z_score = (stat - mean)/std
-        return z_score/np.sqrt(n_ob)
+    # TODO: Check this
+    def wilcoxon_effect_size(statistic: float, sample: int, nobs: int):
+        mean = sample * (sample + 1) / 4
+        std = np.sqrt(sample * (sample + 1) * (2 * sample + 1) / 24)
+        z_score = (statistic - mean) / std
+        return z_score/np.sqrt(nobs)
+
+    def mann_whitney(self: object, a, b, *args, **kwargs):
+        return st.mannwhitneyu(self._data[a], self._data[b], *args, **kwargs)
+
+    def wilcoxon(self: object, a, b, *args, **kwargs):
+        return st.wilcoxon(self._data[a], self._data[b], *args, **kwargs)
+
+    def kruskal_wallis(self: object, *args, **kwargs):
+        return st.kruskal(*(c for _, c in self._data.iteritems()),
+                          *args, **kwargs)
+
+    def friedman_chi(self: object, *args, **kwargs):
+        return st.friedmanchisquare(*(c for _, c in self._data.iteritems()),
+                                    *args, **kwargs)
 
     def boxplot(self: object, title="Box Plot"):
         sns.swarmplot(data=self._data, color=".25")
@@ -205,11 +196,23 @@ class Statistics:
 if __name__ == '__main__':
     filename_1 = 'pulse_rate.txt'
     stats = Statistics("sphere.txt", header=None, sep="\t")
-    stats.describe(plot=True)
+    # stats.describe(plot=True)
+    # stats.histogram(normal=True)
+    # print(stats.one_way_anova(independent=True))
+    # print(stats.one_way_anova(independent=False))
+
+    print(stats.ttest(0, 1))
+    print(stats.ttest(0, 1, paired=True))
     print(stats.levene())
-    for i in stats.kstest():
-        print(i)
-    for i in stats.shapiro():
-        print(i)
-    for i in stats.anderson():
-        print(i)
+    print(stats.mann_whitney(0, 1))
+    # print(stats.wilcoxon(0, 1))
+    print(stats.kruskal_wallis())
+    print(stats.friedman_chi())
+    print(stats.one_way_anova(paired=False))
+    # print(stats.levene())
+    # for i in stats.kstest():
+    #     print(i)
+    # for i in stats.shapiro():
+    #     print(i)
+    # for i in stats.anderson():
+    #     print(i)

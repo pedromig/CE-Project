@@ -5,7 +5,6 @@ import seaborn as sns
 import scipy.stats as st
 import collections
 
-
 class Statistics:
 
     # Set styling for statistic plots

@@ -44,7 +44,19 @@ def test_jb(size):
                                      mutation=UniformBitflipMutation(
                                          probability=0.2))
     )
-    john(size)
+    john(size, seed=42)
+
+    # Stats -> (generation, best individual, average population fitness)
+    stats = john.statistics()
+    print(stats[0][1])
+    print(stats[-1][1])
+
+    # TODO: function that takes statistics and plots them over generation
+    # fitnes of the best and average over all the generations
+
+    # Function that runs the problem with multiple seeds and saves the
+    # infomation of multiple runs in a file (in this case
+    # john(size, seed=XXXXXX)). Its just a loop basically
 
 
 def test_sphere(dim):
@@ -64,7 +76,7 @@ def test_sphere(dim):
         survivors=Elitism(0.2),
         immigrants=RandomImmigrants(immigrants=0.2)
     )
-    function(dim, d, sphere)
+    function(dim, d, sphere, seed=123)
 
 
 def test_rosenbrock(dim):
@@ -170,7 +182,7 @@ def test_griewank(dim):
 
 
 if __name__ == "__main__":
-    test_jb(30)
+    test_jb(20)
     # test_sphere(2)
     # test_rosenbrock(2)
     # test_step(2)

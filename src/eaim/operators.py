@@ -152,5 +152,5 @@ class ElitistImmigrants:
         immigrants = int(len(population) * self._immigrants)
         population.sort()
         for i in range(immigrants):
-            population[i] = copy.deepcopy(population[len(population) - 1])
+            population[i] = copy.deepcopy(population[-1])
             self._mutation(population[i])

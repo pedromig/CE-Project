@@ -47,5 +47,5 @@ class JB:
         return str(self.genotype)
 
     def __str__(self: object) -> str:
-        fenotype = [n for n, g in enumerate(self.genotype) if g == 1]
-        return f"({fenotype}, {self.fitness})"
+        #fenotype = [n for n, g in enumerate(self.genotype) if g == 1]
+        return f"{self.genotype}"

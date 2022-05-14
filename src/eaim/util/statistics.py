@@ -25,6 +25,9 @@ class Statistics:
         self.q25 = self._data.quantile(.25)
         self.q50 = self._data.quantile(.50)
         self.q75 = self._data.quantile(.75)
+    
+    def __call__(self: object):
+        return self._mean, self._median, self._mode, self._std, self._var
 
     def levene(self: object):
         """

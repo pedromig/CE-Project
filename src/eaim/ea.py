@@ -1,13 +1,15 @@
 import random
 from typing import Callable
-
+import math 
+import statistics
+import sys
 
 class EvolutionaryAlgorithm:
     def __init__(self: object, *args, popsize: int, generations: int,
                  problem: Callable, selection: Callable,
                  crossover: Callable, mutation: Callable,
                  survivors: Callable,
-                 immigrants: Callable = lambda *args, **kwags: None,
+                 immigrants: Callable = None,
                  fitness: Callable = lambda x: x.fitness,
                  eval: Callable = lambda x: x.eval(),
                  **kwargs):
@@ -30,12 +32,16 @@ class EvolutionaryAlgorithm:
         self._args = args
         self._kwargs = kwargs
 
+
+
         self._stats = []
 
     def __call__(self: object, *args, stats=True, seed=None, **kwargs):
 
         # Set seed for the rng on this run
-        random.seed(seed)
+        seed = random.randrange(10000)
+        rng = random.Random(seed)
+        print("Seed:", seed)
 
         # Generate initial population
         population = [self._problem(*args, **kwargs)
@@ -43,10 +49,15 @@ class EvolutionaryAlgorithm:
 
         # Gather statistics - Generation, Curr Best, Average best (start)
         if stats:
+            mean, std, variance, median, mode = self.gather_stats(population)
+            
             self._stats.append((0,
                                 max(population),
-                                sum(self._fitness(i)
-                                    for i in population) / len(population)))
+                                mean,
+                                std,
+                                variance,
+                                median,
+                                mode))
 
         for gen in range(1, self._generations + 1):
             # Parent Selection
@@ -69,18 +80,44 @@ class EvolutionaryAlgorithm:
 
             # Gather statistics - Generation, Curr Best, Average best
             if stats:
+                mean, std, variance, median, mode = self.gather_stats(population)
+
                 print(f"Generation {gen} of {self._generations}", end="\r")
-                data = (gen,
+                
+                data = (seed,
                         max(population),
-                        sum(self._fitness(i)
-                            for i in population) / len(population))
+                        self._fitness(max(population)),
+                        mean,
+                        std,
+                        variance,
+                        median,
+                        mode)
                 self._stats.append(data)
 
             # Immigrants Insertion
-            if gen != self._generations:
-                self._immigrants(population, self._problem, *args, **kwargs)
+            if self._immigrants is not  None:
+                if gen != self._generations:
+                    self._immigrants(population, self._problem, *args, **kwargs)
 
         return population
+    
+    def no_immigrants():
+        self._immigrants = None
+
+
+    def gather_stats(self: object, population, *args):
+
+        mean = statistics.mean([self._fitness(x) for x in population])
+
+        std = math.sqrt(sum((self._fitness(i) - mean)**2 for i in population)) / len(population)
+
+        variance = std**2
+        
+        median = statistics.median(self._fitness(i) for i in population)
+
+        mode = statistics.mode(self._fitness(i) for i in population)
+
+        return mean, std, variance, median, mode
 
     def statistics(self: object):
         return self._stats

@@ -34,7 +34,7 @@ class Function:
         return str(self.genotype)
 
     def __str__(self: object):
-        return f"({self.genotype}, {self.fitness})"
+        return f"{self.genotype}"
 
 
 def sphere(x: list[float]) -> float:

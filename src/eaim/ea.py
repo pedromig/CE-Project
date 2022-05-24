@@ -1,8 +1,9 @@
 import random
 from typing import Callable
-import math 
+import math
 import statistics
 import sys
+
 
 class EvolutionaryAlgorithm:
     def __init__(self: object, *args, popsize: int, generations: int,
@@ -32,16 +33,12 @@ class EvolutionaryAlgorithm:
         self._args = args
         self._kwargs = kwargs
 
-
-
         self._stats = []
 
     def __call__(self: object, *args, stats=True, seed=None, **kwargs):
 
         # Set seed for the rng on this run
-        seed = random.randrange(10000)
-        rng = random.Random(seed)
-        print("Seed:", seed)
+        random.seed(seed)
 
         # Generate initial population
         population = [self._problem(*args, **kwargs)
@@ -50,7 +47,7 @@ class EvolutionaryAlgorithm:
         # Gather statistics - Generation, Curr Best, Average best (start)
         if stats:
             mean, std, variance, median, mode = self.gather_stats(population)
-            
+
             self._stats.append((0,
                                 max(population),
                                 mean,
@@ -80,10 +77,11 @@ class EvolutionaryAlgorithm:
 
             # Gather statistics - Generation, Curr Best, Average best
             if stats:
-                mean, std, variance, median, mode = self.gather_stats(population)
+                mean, std, variance, median, mode = self.gather_stats(
+                    population)
 
-                print(f"Generation {gen} of {self._generations}", end="\r")
-                
+                # print(f"Generation {gen} of {self._generations}", end="\r")
+
                 data = (seed,
                         max(population),
                         self._fitness(max(population)),
@@ -95,24 +93,25 @@ class EvolutionaryAlgorithm:
                 self._stats.append(data)
 
             # Immigrants Insertion
-            if self._immigrants is not  None:
+            if self._immigrants is not None:
                 if gen != self._generations:
-                    self._immigrants(population, self._problem, *args, **kwargs)
+                    self._immigrants(
+                        population, self._problem, *args, **kwargs)
 
         return population
-    
-    def no_immigrants():
-        self._immigrants = None
 
+    def no_immigrants(self):
+        self._immigrants = None
 
     def gather_stats(self: object, population, *args):
 
         mean = statistics.mean([self._fitness(x) for x in population])
 
-        std = math.sqrt(sum((self._fitness(i) - mean)**2 for i in population)) / len(population)
+        std = math.sqrt(sum((self._fitness(i) - mean) **
+                        2 for i in population)) / len(population)
 
         variance = std**2
-        
+
         median = statistics.median(self._fitness(i) for i in population)
 
         mode = statistics.mode(self._fitness(i) for i in population)

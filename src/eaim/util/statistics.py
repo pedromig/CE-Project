@@ -5,6 +5,7 @@ import seaborn as sns
 import scipy.stats as st
 import collections
 
+
 class Statistics:
 
     # Set styling for statistic plots
@@ -25,7 +26,7 @@ class Statistics:
         self.q25 = self._data.quantile(.25)
         self.q50 = self._data.quantile(.50)
         self.q75 = self._data.quantile(.75)
-    
+
     def __call__(self: object):
         return self._mean, self._median, self._mode, self._std, self._var
 
@@ -138,11 +139,10 @@ class Statistics:
         z_score = (statistic - mean) / std
         return z_score / np.sqrt(nobs)
 
-    # TODO: Check this
-    def wilcoxon_effect_size(statistic: float, sample: int, nobs: int):
+    def wilcoxon_effect_size(self, stat: float, sample: int, nobs: int):
         mean = sample * (sample + 1) / 4
         std = np.sqrt(sample * (sample + 1) * (2 * sample + 1) / 24)
-        z_score = (statistic - mean) / std
+        z_score = (stat - mean) / std
         return z_score/np.sqrt(nobs)
 
     def mann_whitney(self: object, a, b, *args, **kwargs):
@@ -163,7 +163,7 @@ class Statistics:
         sns.swarmplot(data=self._data, color=".25")
         sns.boxplot(data=self._data)
         plt.title(title)
-        plt.show()
+        # plt.show()
 
     def histogram(self: object, title="Histogram", bins=25, normal=False):
         for c in self._data.columns:
@@ -196,25 +196,26 @@ class Statistics:
 
 
 if __name__ == '__main__':
-    filename_1 = 'pulse_rate.txt'
-    stats = Statistics("sphere.txt", header=None, sep="\t")
-    # stats.describe(plot=True)
-    # stats.histogram(normal=True)
-    # print(stats.one_way_anova(independent=True))
-    # print(stats.one_way_anova(independent=False))
+    file = "step-stats.csv"
+    rand = Statistics(file, header=None, usecols=[0, 1], names=[0, 1])
+    elite = Statistics(file, header=None, usecols=[0, 2], names=[0, 1])
 
-    print(stats.ttest(0, 1))
-    print(stats.ttest(0, 1, paired=True))
-    print(stats.levene())
-    print(stats.mann_whitney(0, 1))
-    # print(stats.wilcoxon(0, 1))
-    print(stats.kruskal_wallis())
-    print(stats.friedman_chi())
-    print(stats.one_way_anova(paired=False))
-    # print(stats.levene())
-    # for i in stats.kstest():
-    #     print(i)
-    # for i in stats.shapiro():
-    #     print(i)
-    # for i in stats.anderson():
-    #     print(i)
+    # rand.describe(plot=True)
+    # elite.describe(plot=True)
+
+    # rand.histogram(normal=True)
+    # elite.histogram(normal=True)
+
+    print(rand.kstest())
+    print(elite.kstest())
+
+    rw = rand.wilcoxon(0, 1)
+    ew = elite.wilcoxon(0, 1)
+    print(rw)
+    print(ew)
+
+    x = np.count_nonzero(rand._data[0] - rand._data[1]) - 1
+    print(elite.wilcoxon_effect_size(rw.statistic, x, len(rand._data)))
+
+    y = np.count_nonzero(elite._data[0] - elite._data[1]) - 1
+    print(elite.wilcoxon_effect_size(ew.statistic, y, len(elite._data)))

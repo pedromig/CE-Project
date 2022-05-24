@@ -6,16 +6,16 @@ from .util import bounded
 
 
 class UniformBitflipMutation:
-    def __init__(self: object, 
-                probability: Callable = float,
-                **kwarg) -> None:
+    def __init__(self: object,
+                 probability: Callable = float,
+                 **kwarg) -> None:
         self._probability = probability
 
     def __call__(self: object, x) -> None:
         for i in range(len(x)):
             if random.random() < self._probability:
                 x[i] ^= 1
-    
+
     def __name__(self: object) -> str:
         return f"UniformBitflipMutation"
 
@@ -52,7 +52,7 @@ class UniformMutation:
         for i in range(len(x)):
             if random.random() < self._probability:
                 x[i] = random.uniform(*self._domain[i])
-    
+
     def __name__(self: object) -> str:
         return f"NPointCrossover"
 
@@ -72,15 +72,15 @@ class NPointCrossover:
                 l, h = points[i], points[i + 1]
                 if i % 2 == 0:
                     a[l:h], b[l:h] = b[l:h], a[l:h]
-    
+
     def __name__(self: object) -> str:
         return f"NPointCrossover"
 
 
 class UniformCrossover:
-    def __init__(self: object, 
-                probability: Callable = float,
-                **kwarg) -> None:
+    def __init__(self: object,
+                 probability: Callable = float,
+                 **kwarg) -> None:
         self._probability = probability
 
     def __call__(self: object, a, b) -> None:
@@ -88,16 +88,16 @@ class UniformCrossover:
             for i in range(len(a)):
                 if random.random() < 0.5:
                     a[i], b[i] = b[i], a[i]
-    
+
     def __name__(self: object) -> str:
         return f"UniformCrossover"
 
 
 class ArithmeticCrossover:
-    def __init__(self: object, 
-                alpha: Callable= float, 
-                probability: Callable = float,
-                **kwarg) -> None:
+    def __init__(self: object,
+                 alpha: Callable = float,
+                 probability: Callable = float,
+                 **kwarg) -> None:
         self._probability = probability
         self._alpha = alpha
 
@@ -107,16 +107,16 @@ class ArithmeticCrossover:
                 x, y = a[i], b[i]
                 a[i] = self._alpha * x + (1 - self._alpha) * y
                 b[i] = self._alpha * y + (1 - self._alpha) * x
-    
+
     def __name__(self: object) -> str:
         return f"ArithmeticCrossover"
 
 
 class KTournamentSelection:
-    def __init__(self: object, 
-                size = int, 
-                k: int = 2,
-                **kwarg) -> None:
+    def __init__(self: object,
+                 size=int,
+                 k: int = 2,
+                 **kwarg) -> None:
         self._k = k
         self._size = size
 
@@ -132,10 +132,10 @@ class KTournamentSelection:
 
 
 class RouletteWheelSelection:
-    def __init__(self: object, 
-                size: int,
-                fitness: Callable = lambda x: x.fitness,
-                **kwarg) -> None:
+    def __init__(self: object,
+                 size: int,
+                 fitness: Callable = lambda x: x.fitness,
+                 **kwarg) -> None:
         self._size = size
         self._fitness = fitness
 
@@ -154,13 +154,13 @@ class RouletteWheelSelection:
                     matting_pool.append(copy.deepcopy(s))
                     break
         return matting_pool
-    
+
     def __name__(self: object) -> str:
         return "RouletteWheelSelection"
 
 
 class Elitism:
-    def __init__(self: object, elite: float,**kwarg) -> None:
+    def __init__(self: object, elite: float, **kwarg) -> None:
         self._elite = elite
 
     def __call__(self: object, parents: list, offspring: list) -> None:
@@ -174,7 +174,7 @@ class Elitism:
 
 
 class RandomImmigrants:
-    def __init__(self: object, immigrants: Callable = float,**kwarg) -> None:
+    def __init__(self: object, immigrants: Callable = float, **kwarg) -> None:
         self._immigrants = immigrants
 
     def __call__(self: object, population: list,
@@ -183,13 +183,13 @@ class RandomImmigrants:
         population.sort()
         for i in range(immigrants):
             population[i] = problem(*args, **kwargs)
-    
+
     def __name__(self):
         return "RandomImmigrants"
 
 
 class ElitistImmigrants:
-    def __init__(self: object, mutation: Callable, immigrants: Callable = float,**kwarg) -> None:
+    def __init__(self: object, mutation: Callable, immigrants: Callable = float, **kwarg) -> None:
         self._immigrants = immigrants
         self._mutation = mutation
 
@@ -199,6 +199,7 @@ class ElitistImmigrants:
         for i in range(immigrants):
             population[i] = copy.deepcopy(population[-1])
             self._mutation(population[i])
-    
+
     def __name__(self):
         return "ElitistImmigrants"
+
